@@ -510,9 +510,9 @@ bool process_events(void){
   
   while(SDL_PollEvent(&ev) ) {
     switch(ev.type){
-    case SDL_QUIT:// ウィンドウの×ボタンが押された時など
+    case SDL_QUIT:
       return false;
-    case SDL_KEYDOWN:// キーボードからの入力があった時
+    case SDL_KEYDOWN:
       key=&(ev.key.keysym.sym);
       if(*key==27){
 	return false;
