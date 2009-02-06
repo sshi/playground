@@ -37,7 +37,7 @@ void initTexture(void) {
 // GLOVAL VARIABLES
 // -----------------------------------------------------------------
 
-int width = 600,height=400,s_height=10;
+int width = 600,height=400,s_height=10,sub_width = 100;
 //int t = 0;
 
 // -----------------------------------------------------------------
@@ -100,7 +100,7 @@ void pv(Vector3 o){
 class View {
   // position & vector
   
-  Vector3 ahead;
+  //Vector3 ahead;
   Vector3 upper;
 
   // turn & move
@@ -144,6 +144,7 @@ class View {
   }
   
  public:
+  Vector3 ahead;
   Point pos;
   View(){
     ahead = Vector3(0,0,-1);
@@ -157,7 +158,7 @@ class View {
   Vector3 get_light(){
     //return pos + (ahead * 3) + upper;
     //return pos + upper * 10;
-    //return pos;
+    //return pos ;
     return Point(0,20,0);
   };
 
@@ -336,7 +337,8 @@ void drawBoard(Point pos,double x,double y,double z){
   glPushMatrix();
   glTranslated(pos.x,pos.y,pos.z);
   glScaled(x,y,z);
-  drawTile();
+  //drawTile();
+  glCallList(2);
   glPopMatrix();
   return;
 }
@@ -369,8 +371,10 @@ class CubeMatrix{
   }
 };
 
+const static int mazesize = 6;
+
 class Maze {
-  const static int size = 5;
+  static const int size = mazesize;
   Point field[size][size][size];
  public:
   Maze(){
@@ -389,6 +393,15 @@ class Maze {
 	}
       }
     }
+    
+    glNewList(1, GL_COMPILE);
+    draw();
+    glEndList(); 
+
+    glNewList(2, GL_COMPILE);
+    drawTile();
+    glEndList(); 
+    
   }
   void draw(){
     for (int i = 0;i < size;i++){
@@ -428,7 +441,7 @@ void set_light(void){
 
 
 void projection2D(){
-  glViewport(0,0,width,s_height);
+  
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluOrtho2D(0,width,0,s_height);
@@ -439,19 +452,17 @@ void projection2D(){
 }
 
 void projection3D(){
-  glViewport(0,s_height,width,height);
+  
   
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(60.0,(double)width/(double)height,0.1,100);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glShadeModel(GL_SMOOTH);
+  //glShadeModel(GL_SMOOTH);
   
   // move view
-  v.process();
-  v.lookAt();
-  set_light();
+  
 }
 
 
@@ -557,22 +568,36 @@ bool process_events(void){
 void draw3D(){
   drawSolidPlain(-10,100,1);
   mz.draw();
+  //glCallList(1);
   //sc.draw();
   //cm.draw();
 }
 
 void display(void){
   // process
-  sc.process();
-  cm.process();
+  //sc.process();
+  //cm.process();
+  v.process();
 
   // draw
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+  glViewport(0,0,width,s_height);
   projection2D();
   drawFps();
-
+  
+  glViewport(0,s_height,width,height);
   projection3D();
+  v.lookAt();
+  set_light();
+  draw3D();
+  
+  glViewport(width,s_height+height-100,100,100);
+  projection3D();
+  gluLookAt(v.pos.x,mazesize + 5,v.pos.z,
+	    v.pos.x,mazesize + 4,v.pos.z,
+	    v.ahead.x,v.ahead.y,v.ahead.z);
+  set_light();
   draw3D();
 
   SDL_GL_SwapBuffers( );
@@ -608,7 +633,7 @@ void gl_init(void){
 int main(int argc,char** argv){
   srand((unsigned)time(NULL));
   // SDL_INIT
-  SDL_Surface *gScreenSurface = SDL_SetVideoMode(width,
+  SDL_Surface *gScreenSurface = SDL_SetVideoMode(width+sub_width,
 						 height+s_height,
 						 SCREEN_BPP,
 						 SDL_SWSURFACE | SDL_OPENGL);
